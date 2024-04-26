@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: warp10-deployment
+  namespace: default
+  labels:
+    app: warp10
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: warp10
+  template:
+    metadata:
+      labels:
+        app: warp10
+    spec:
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: warp10-container
+          image: warp10io/warp10:3.2.0-ubuntu
+          imagePullPolicy: IfNotPresent
+#          command: ["tail", "-f", "/dev/null"]
+          env:
+            - name: FLAVOR
+              value: standalone
+          volumeMounts:
+            - name: config-volume
+              mountPath: /data/warp10/etc/fdb.cluster
+              subPath: fdb.cluster
+              readOnly: false
+      volumes:
+        - name: config-volume
+          configMap:
+            name: test-cluster-config
+            items:
+              - key: cluster-file
+                path: fdb.cluster
