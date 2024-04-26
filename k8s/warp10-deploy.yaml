@@ -15,6 +15,7 @@ spec:
       labels:
         app: warp10
     spec:
+      serviceAccountName: configmap-creator-sa
       securityContext:
         runAsUser: 499
         runAsGroup: 497
@@ -27,13 +28,26 @@ spec:
             - -c
             - |
               ./bin/warp10.sh start && \
-              ./bin/warp10.sh tokengen tokens/demo-tokengen.mc2 > /output/token_output.txt && \
+              ./bin/warp10.sh tokengen tokens/demo-tokengen.mc2 > /output/token_output.json && \
               tail -f ./logs/warp10.log
           volumeMounts:
             - name: config-volume
               mountPath: /warp10/warpInstall/etc/fdb.cluster
               subPath: fdb.cluster
               readOnly: false
+            - name: output-volume
+              mountPath: /output
+        # Sidecar container to create ConfigMap
+        - name: configmap-creator
+          image: bitnami/kubectl:1.9.11
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              sleep 30
+              kubectl create configmap warp10-token --from-file=/output/token_output.json
+              tail -f /dev/null
+          volumeMounts:
             - name: output-volume
               mountPath: /output
       volumes:
@@ -45,3 +59,33 @@ spec:
                 path: fdb.cluster
         - name: output-volume
           emptyDir: {}
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: configmap-creator-sa
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: configmap-creator-role
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "get", "update", "delete"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: configmap-creator-role-binding
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: configmap-creator-sa
+    namespace: default
+roleRef:
+  kind: Role
+  name: configmap-creator-role
+  apiGroup: rbac.authorization.k8s.io
