@@ -27,6 +27,19 @@ Check FDB
 kubectl-fdb analyze test-cluster
 ```
 
+## Start
+
+Build the warp1ß image and upload it into kind
+```shell
+docker build -t warp10-standaloneplus:1.0.1 ./docker
+
+kind load docker-image warp10-standaloneplus:1.0.1 -n pilatus-k8s
+```
+
+Start warp10
+```shell
+ k apply -f k8s/warp10-deploy.yaml 
+```
 
 ## Debugging
 

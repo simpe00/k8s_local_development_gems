@@ -33,4 +33,5 @@ curl -sLO "https://github.com/FoundationDB/fdb-kubernetes-operator/releases/down
 sha256sum --ignore-missing -c checksums.txt
 chmod +x kubectl-fdb_${VERSION}_${OS}_${ARCH}
 sudo mv ./kubectl-fdb_${VERSION}_${OS}_${ARCH} /usr/local/bin/kubectl-fdb
+rm checksums.txt
 popd
