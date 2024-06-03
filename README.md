@@ -41,6 +41,31 @@ Start warp10
  k apply -f k8s/warp10-deploy.yaml 
 ```
 
+## Spark
+
+Install spark cli with asdf
+[Install guid](https://github.com/jeffryang24/asdf-spark)
+
+### Testing spark
+
+Show WebUI
+```shell
+kubectl port-forward -n spark services/spark-master-svc 8080:80
+```
+
+```shell
+export EXAMPLE_JAR=$(kubectl exec -ti --namespace spark spark-worker-0 -- find examples/jars/ -name 'spark-example*\.jar' | tr -d '\r')
+
+kubectl exec -ti --namespace spark spark-worker-0 -- spark-submit --master spark://spark-master-svc:7077 \
+    --class org.apache.spark.examples.SparkPi \
+    $EXAMPLE_JAR 500 
+```
+
+Install Metrics Server for using HPA
+```shell
+kubectl apply -f k8s/metric-server.yaml
+```
+
 ## Debugging
 
 * [Debugging with fdb plugin](https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/debugging.md)
