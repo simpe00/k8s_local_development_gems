@@ -38,7 +38,7 @@ kind load docker-image warp10-standaloneplus:1.0.1 -n pilatus-k8s
 
 Start warp10
 ```shell
- k apply -f k8s/warp10-deploy.yaml 
+kubectl apply -f k8s/warp10-deploy.yaml 
 ```
 
 ## Spark
