@@ -46,13 +46,26 @@ kubectl apply -f k8s/warp10-deploy.yaml
 Install spark cli with asdf
 [Install guid](https://github.com/jeffryang24/asdf-spark)
 
+Install Spark into k8s
+```shell
+./scripts/installSpark.sh --stageId local
+```
+
 ### Testing spark
 
 Show WebUI
 ```shell
-kubectl port-forward -n spark services/spark-master-svc 8080:80
+./scripts/installIngress.sh --stageId local
 ```
 
+The WebUI will be available at http://spark-app-127-0-0-1.nip.io/
+
+Testing a spark job
+```shell
+./scripts/sparkJob.sh
+```
+
+Testing a spark job with cli
 ```shell
 export EXAMPLE_JAR=$(kubectl exec -ti --namespace spark spark-worker-0 -- find examples/jars/ -name 'spark-example*\.jar' | tr -d '\r')
 
@@ -69,3 +82,15 @@ kubectl apply -f k8s/metric-server.yaml
 ## Debugging
 
 * [Debugging with fdb plugin](https://github.com/FoundationDB/fdb-kubernetes-operator/blob/main/docs/manual/debugging.md)
+
+## Links
+
+Spark on k8s:
+* https://medium.com/@georgelai/apache-spark-on-kubernetes-3b9d1c936f64
+* https://medium.com/@SaphE/deploying-apache-spark-on-a-local-kubernetes-cluster-a-comprehensive-guide-d4a59c6b1204
+* https://medium.com/@SaphE/deploying-apache-spark-on-kubernetes-using-helm-charts-simplified-cluster-management-and-ee5e4f2264fd
+* https://medium.com/@psakets/setting-up-a-spark-cluster-on-kubernetes-using-helm-f1f03ca7106
+
+Spark:
+* https://spark.apache.org/docs/latest/running-on-kubernetes
+* https://spark.apache.org/docs/latest/submitting-applications

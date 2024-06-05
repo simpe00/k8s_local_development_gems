@@ -62,9 +62,12 @@ NGINX_HELM_VERSION="1.2.2"
 echo -e "${GREEN} install spark for ${COMPANY_NAME} on stage ${STAGE_ID} ${NO_COLOR}"
 NGINX_RELEASE_NAME="nginx"
 helm upgrade --install \
+  -n spark \
   ${NGINX_RELEASE_NAME} \
   oci://ghcr.io/nginxinc/charts/nginx-ingress \
-  --version ${NGINX_HELM_VERSION}
+  --version ${NGINX_HELM_VERSION} \
+  --set controller.hostPort.enable=true \
+  --set controller.hostPort.http=32080
 
 
 
