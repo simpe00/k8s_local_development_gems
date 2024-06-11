@@ -29,7 +29,7 @@ kubectl-fdb analyze test-cluster
 
 ## Start
 
-Build the warp1ß image and upload it into kind
+Build the warp10 image and upload it into kind
 ```shell
 docker build -t warp10-standaloneplus:1.0.1 ./docker
 
@@ -58,7 +58,7 @@ Show WebUI
 ./scripts/installIngress.sh --stageId local
 ```
 
-The WebUI will be available at http://spark-app-127-0-0-1.nip.io/
+The WebUI will be available at http://spark-app-127-0-0-1.nip.io:32180/
 
 Testing a spark job
 ```shell

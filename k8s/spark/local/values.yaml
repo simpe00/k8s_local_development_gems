@@ -1,0 +1,20 @@
+master:
+  configOptions:
+    -Dspark.ui.reverseProxy=true
+    -Dspark.ui.reverseProxyUrl=http://spark-app-127-0-0-1.nip.io:32180
+
+worker:
+  configOptions:
+    -Dspark.ui.reverseProxy=true
+    -Dspark.ui.reverseProxyUrl=http://spark-app-127-0-0-1.nip.io:32180
+
+ingress:
+  hostname: spark-app-127-0-0-1.nip.io
+  extraPaths:
+    - path: /static
+      pathType: Prefix
+      backend:
+        service:
+          name: spark-master-svc
+          port:
+            name: http
