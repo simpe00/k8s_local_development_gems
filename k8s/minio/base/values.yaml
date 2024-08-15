@@ -1,0 +1,28 @@
+# values.yaml
+replicas: 1
+rootUser: "minioadmin"
+rootPassword: "minioadmin"
+mode: standalone
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: "standard"
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  hosts:
+    - minio-app-127-0-0-1.nip.io
+consoleIngress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  hosts:
+    - minio-console-127-0-0-1.nip.io

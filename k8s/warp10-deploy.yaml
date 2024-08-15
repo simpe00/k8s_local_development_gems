@@ -1,8 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: warp10-deployment
-  namespace: default
+  name: warp10-deployment-test
   labels:
     app: warp10
 spec:
@@ -16,76 +15,92 @@ spec:
         app: warp10
     spec:
       serviceAccountName: configmap-creator-sa
-      securityContext:
-        runAsUser: 499
-        runAsGroup: 497
+      # securityContext:
+      #   runAsUser: 499
+      #   runAsGroup: 497
       containers:
         - name: warp10-container
-          image: warp10-standaloneplus:1.0.1
+          # image: pilatussharedchnprodacr.azurecr.io/cac/gems/warp10:1.0.1
+          image: pilatussharedchnprodacr.azurecr.io/warp10io/warp10:3.2.0-ubuntu
           imagePullPolicy: IfNotPresent
-          command:
+          env:
+            - name: FLAVOR
+              value: standalone+
+          ports:
+            - containerPort: 8080
+              name: api
+            - containerPort: 8081
+              name: studio
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 128Mi
+          args:
             - sh
             - -c
             - |
+              cp /tmp/fdb.cluster ./etc/fdb.cluster
+              sed -i 's/standalone.host = 127.0.0.1/standalone.host = 0.0.0.0/' ./etc/conf.d/00-warp.conf
               ./bin/warp10.sh start && \
               ./bin/warp10.sh tokengen tokens/demo-tokengen.mc2 > /output/token_output.json && \
               tail -f ./logs/warp10.log
           volumeMounts:
             - name: config-volume
-              mountPath: /warp10/warpInstall/etc/fdb.cluster
+              mountPath: /tmp/fdb.cluster
               subPath: fdb.cluster
               readOnly: false
             - name: output-volume
               mountPath: /output
         # Sidecar container to create ConfigMap
-        - name: configmap-creator
-          image: bitnami/kubectl:1.9.11
-          command:
-            - "/bin/bash"
-            - "-c"
-            - |
-              sleep 30
-              kubectl create configmap warp10-token --from-file=/output/token_output.json
-              tail -f /dev/null
-          volumeMounts:
-            - name: output-volume
-              mountPath: /output
+        # - name: configmap-creator
+        #   image: bitnami/kubectl:1.9.11
+        #   command:
+        #     - "/bin/bash"
+        #     - "-c"
+        #     - |
+        #       sleep 30
+        #       kubectl create configmap warp10-token --from-file=/output/token_output.json
+        #       tail -f /dev/null
+        #   volumeMounts:
+        #     - name: output-volume
+        #       mountPath: /output
       volumes:
         - name: config-volume
           configMap:
-            name: test-cluster-config
+            name: fdb-cluster-config
             items:
               - key: cluster-file
                 path: fdb.cluster
         - name: output-volume
           emptyDir: {}
 
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: configmap-creator-sa
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  namespace: default
-  name: configmap-creator-role
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps"]
-    verbs: ["create", "get", "update", "delete"]
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: configmap-creator-role-binding
-  namespace: default
-subjects:
-  - kind: ServiceAccount
-    name: configmap-creator-sa
-    namespace: default
-roleRef:
-  kind: Role
-  name: configmap-creator-role
-  apiGroup: rbac.authorization.k8s.io
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: configmap-creator-sa
+# ---
+# kind: Role
+# apiVersion: rbac.authorization.k8s.io/v1
+# metadata:
+#   name: configmap-creator-role
+# rules:
+#   - apiGroups: [""]
+#     resources: ["configmaps"]
+#     verbs: ["create", "get", "update", "delete"]
+# ---
+# kind: RoleBinding
+# apiVersion: rbac.authorization.k8s.io/v1
+# metadata:
+#   name: configmap-creator-role-binding
+# subjects:
+#   - kind: ServiceAccount
+#     name: configmap-creator-sa
+#     namespace: default
+# roleRef:
+#   kind: Role
+#   name: configmap-creator-role
+#   apiGroup: rbac.authorization.k8s.io
