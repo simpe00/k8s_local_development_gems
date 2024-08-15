@@ -21,26 +21,26 @@ SERVER_URL=$(kind get kubeconfig --name="${CLUSTER_NAME}" | grep 'server:' | awk
 #   https://github.com/simpe00/test-exmaple-jar/raw/main/spark-examples_2.12-3.5.1.jar 1
 
 # http://minio-console-127-0-0-1.nip.io:32180/login
-helm repo add minio https://charts.min.io/
-helm repo update minio
-helm upgrade \
-	--install \
-	minio \
-	minio/minio \
-	--namespace spark \
-	--create-namespace \
-	-f $REPO_ROOT_DIR/k8s/minio/base/values.yaml
+# helm repo add minio https://charts.min.io/
+# helm repo update minio
+# helm upgrade \
+# 	--install \
+# 	minio \
+# 	minio/minio \
+# 	--namespace spark \
+# 	--create-namespace \
+# 	-f $REPO_ROOT_DIR/k8s/minio/base/values.yaml
 
 
 
-docker build . -f $REPO_ROOT_DIR/docker/spark/Dockerfile -t bitnami/spark-with-user:latest
-kind load docker-image bitnami/spark-with-user:latest -n pilatus-k8s
+# docker build . -f $REPO_ROOT_DIR/docker/spark/Dockerfile -t bitnami/spark-with-user:latest
+# kind load docker-image bitnami/spark-with-user:latest -n pilatus-k8s
 
 
 
-kubectl apply -f $REPO_ROOT_DIR/k8s/spark/base/sa.yaml
-kubectl apply -f $REPO_ROOT_DIR/k8s/spark/base/role.yaml
-kubectl apply -f $REPO_ROOT_DIR/k8s/spark/base/role-binding.yaml
+# kubectl apply -f $REPO_ROOT_DIR/k8s/spark/base/sa.yaml
+# kubectl apply -f $REPO_ROOT_DIR/k8s/spark/base/role.yaml
+# kubectl apply -f $REPO_ROOT_DIR/k8s/spark/base/role-binding.yaml
 
 kubectl delete pod -n spark spark --force --grace-period=0
 # WIP
@@ -58,8 +58,12 @@ spark-submit \
  --conf spark.kubernetes.driver.podTemplateContainerName=spark \
  --conf spark.kubernetes.executor.podTemplateContainerName=spark \
  --conf spark.kubernetes.driverEnv.SPARK_USER=spark \
- --conf spark.eventLog.enabled=false \
- --conf spark.eventLog.dir='s3a://my-bucket/spark-logs' \
+ --conf spark.eventLog.enabled=true \
+ --conf spark.kubernetes.driver.secretKeyRef.AWS_ACCESS_KEY_ID=minio:rootUser \
+ --conf spark.kubernetes.driver.secretKeyRef.AWS_SECRET_ACCESS_KEY=minio:rootPassword \
+ --conf spark.kubernetes.executor.secretKeyRef.AWS_ACCESS_KEY_ID=minio:rootUser \
+ --conf spark.kubernetes.executor.secretKeyRef.AWS_SECRET_ACCESS_KEY=minio:rootPassword \
+ --conf spark.eventLog.dir='s3a://minio:9000/spark-logs' \
  --num-executors 1 \
  --verbose \
  https://raw.githubusercontent.com/simpe00/test-exmaple-jar/main/pi.py 1
