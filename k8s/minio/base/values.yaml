@@ -26,3 +26,10 @@ consoleIngress:
     kubernetes.io/ingress.class: "nginx"
   hosts:
     - minio-console-127-0-0-1.nip.io
+
+bucket: 
+  - name: "minio"
+  - name: "spark"
+
+customCommands:
+  - command: mb myminio/spark/logs/
