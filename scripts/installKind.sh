@@ -37,9 +37,3 @@ else
     echo "Cluster $CLUSTER_NAME does not exist."
     kind create cluster --config ${GITLAB_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
 fi
-
-kind create cluster --config ${KIND_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
-
-
-
-

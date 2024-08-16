@@ -2,7 +2,7 @@
 apiVersion: apps.foundationdb.org/v1beta2
 kind: FoundationDBCluster
 metadata:
-  name: test-cluster
+  name: fdb-cluster
 spec:
   automationOptions:
     replacements:
@@ -12,7 +12,7 @@ spec:
   labels:
     filterOnOwnerReference: false
     matchLabels:
-      foundationdb.org/fdb-cluster-name: test-cluster
+      foundationdb.org/fdb-cluster-name: fdb-cluster
     processClassLabels:
       - foundationdb.org/fdb-process-class
     processGroupIDLabels:

@@ -20,4 +20,4 @@ kubectl apply -f https://raw.githubusercontent.com/FoundationDB/fdb-kubernetes-o
 
 
 kubectl apply -f https://raw.githubusercontent.com/foundationdb/fdb-kubernetes-operator/main/config/samples/deployment.yaml
-kubectl apply -f ${REPO_ROOT_DIR}/k8s/cluster.yaml
+kubectl apply -f ${REPO_ROOT_DIR}/k8s/fdb-cluster.yaml

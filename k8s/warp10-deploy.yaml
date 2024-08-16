@@ -14,14 +14,15 @@ spec:
       labels:
         app: warp10
     spec:
-      serviceAccountName: configmap-creator-sa
+      serviceAccountName: configmap-secret-creator-sa
       # securityContext:
       #   runAsUser: 499
       #   runAsGroup: 497
       containers:
         - name: warp10-container
           # image: pilatussharedchnprodacr.azurecr.io/cac/gems/warp10:1.0.1
-          image: pilatussharedchnprodacr.azurecr.io/warp10io/warp10:3.2.0-ubuntu
+          # image: pilatussharedchnprodacr.azurecr.io/warp10io/warp10:3.2.0-ubuntu
+          image: warp10-standaloneplus:1.0.1
           imagePullPolicy: IfNotPresent
           env:
             - name: FLAVOR
@@ -44,8 +45,12 @@ spec:
             - |
               cp /tmp/fdb.cluster ./etc/fdb.cluster
               sed -i 's/standalone.host = 127.0.0.1/standalone.host = 0.0.0.0/' ./etc/conf.d/00-warp.conf
-              ./bin/warp10.sh start && \
+              echo "Generating token" && \
               ./bin/warp10.sh tokengen tokens/demo-tokengen.mc2 > /output/token_output.json && \
+              echo "Token generated" && \
+              sleep 30 && \
+              echo "Starting warp10 ..." && \
+              ./bin/warp10.sh start && \
               tail -f ./logs/warp10.log
           volumeMounts:
             - name: config-volume
@@ -55,18 +60,45 @@ spec:
             - name: output-volume
               mountPath: /output
         # Sidecar container to create ConfigMap
-        # - name: configmap-creator
-        #   image: bitnami/kubectl:1.9.11
-        #   command:
-        #     - "/bin/bash"
-        #     - "-c"
-        #     - |
-        #       sleep 30
-        #       kubectl create configmap warp10-token --from-file=/output/token_output.json
-        #       tail -f /dev/null
-        #   volumeMounts:
-        #     - name: output-volume
-        #       mountPath: /output
+        - name: secret-creator
+          image: bitnami/kubectl:1.30
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              echo "Creating token secret"
+              sleep 20
+              SERVICE_NAME="warp10-api"
+              NAMESPACE="default"
+              PORT="8080"
+              endpoint="http://${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:${PORT}"
+              read_token=$(cat /output/token_output.json | jq -r '.[] | select(.id == "DemoReadToken") | .token')
+              write_token=$(cat /output/token_output.json | jq -r '.[] | select(.id == "DemoWriteToken") | .token')
+              read_ident=$(cat /output/token_output.json | jq -r '.[] | select(.id == "DemoReadToken") | .ident')
+              write_ident=$(cat /output/token_output.json | jq -r '.[] | select(.id == "DemoWriteToken") | .ident')
+              kubectl create secret generic warp10-token \
+                --from-literal=read-token=$read_token \
+                --from-literal=write-token=$write_token \
+                --from-literal=read-ident=$read_ident \
+                --from-literal=write-ident=$write_ident \
+                --from-literal=endpoint=$endpoint \
+                --dry-run=client -o yaml | kubectl apply -f -
+              kubectl create secret generic warp10-token \
+                --from-literal=read-token=$read_token \
+                --from-literal=write-token=$write_token \
+                --from-literal=read-ident=$read_ident \
+                --from-literal=write-ident=$write_ident \
+                --from-literal=endpoint=$endpoint \
+                --dry-run=client -o yaml | kubectl apply -f -
+            
+              tail -f /dev/null
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+          volumeMounts:
+            - name: output-volume
+              mountPath: /output
       volumes:
         - name: config-volume
           configMap:
@@ -77,30 +109,45 @@ spec:
         - name: output-volume
           emptyDir: {}
 
-# ---
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: configmap-creator-sa
-# ---
-# kind: Role
-# apiVersion: rbac.authorization.k8s.io/v1
-# metadata:
-#   name: configmap-creator-role
-# rules:
-#   - apiGroups: [""]
-#     resources: ["configmaps"]
-#     verbs: ["create", "get", "update", "delete"]
-# ---
-# kind: RoleBinding
-# apiVersion: rbac.authorization.k8s.io/v1
-# metadata:
-#   name: configmap-creator-role-binding
-# subjects:
-#   - kind: ServiceAccount
-#     name: configmap-creator-sa
-#     namespace: default
-# roleRef:
-#   kind: Role
-#   name: configmap-creator-role
-#   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: configmap-secret-creator-sa
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: configmap-secret-creator-role
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["create", "get", "update", "delete", "patch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: configmap-secret-creator-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: configmap-secret-creator-sa
+    namespace: default
+roleRef:
+  kind: Role
+  name: configmap-secret-creator-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: warp10-api
+  labels:
+    app: warp10
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30880
+  selector:
+    app: warp10

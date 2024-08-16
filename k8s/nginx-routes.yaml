@@ -1,0 +1,53 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress-warp10
+  namespace: default
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - warp10-api-127-0-0-1.nip.io
+      secretName: tls-cert
+  rules:
+    - host: warp10-api-127-0-0-1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: warp10-api
+                port:
+                  number: 8080
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress-azurite
+  namespace: default
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - azurite-queue-127-0-0-1.nip.io
+      secretName: tls-cert
+      
+  rules:
+    - host: azurite-queue-127-0-0-1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azurite
+                port:
+                  number: 10001
+
+
+
+
