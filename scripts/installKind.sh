@@ -14,7 +14,7 @@ STAGE_ID=local
 
 
 # Extract the cluster name from the kind-no-ssl.yaml file
-CLUSTER_NAME=$(grep 'name:' ${REPO_ROOT_DIR}/kind/kind-no-ssl.yaml | awk '{print $2}')
+CLUSTER_NAME=$(grep 'name:' ${KIND_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml | awk '{print $2}')
 
 # Check if the cluster exists
 if kind get clusters | grep -q "$CLUSTER_NAME"; then
@@ -25,7 +25,7 @@ if kind get clusters | grep -q "$CLUSTER_NAME"; then
     if [[ "$user_input" == "yes" ]]; then
         echo "Restarting the cluster."
         kind delete cluster --name ${CLUSTER_NAME}
-        kind create cluster --config ${GITLAB_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
+        kind create cluster --config ${KIND_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
     elif [[ "$user_input" == "no" ]]; then
         echo "Use the existing cluster."
         kubectl config use-context kind-${CLUSTER_NAME}
@@ -35,7 +35,7 @@ if kind get clusters | grep -q "$CLUSTER_NAME"; then
     fi
 else
     echo "Cluster $CLUSTER_NAME does not exist."
-    kind create cluster --config ${GITLAB_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
+    kind create cluster --config ${KIND_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
 fi
 
 kind create cluster --config ${KIND_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
