@@ -47,4 +47,4 @@ spark-submit \
  --conf spark.hadoop.com.amazonaws.services.s3.enableV4=true \
  --num-executors 1 \
  --verbose \
- https://raw.githubusercontent.com/simpe00/test-exmaple-jar/main/pi.py 1
+ https://raw.githubusercontent.com/simpe00/test-exmaple-jar/main/pi.py 100
