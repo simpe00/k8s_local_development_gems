@@ -38,8 +38,6 @@ else
     kind create cluster --config ${KIND_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
 fi
 
-kind create cluster --config ${KIND_REPO_ROOT_DIR}/kind/kind-no-ssl.yaml
-
 
 
 
